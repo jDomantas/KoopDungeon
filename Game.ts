@@ -31,8 +31,10 @@ export class Game {
         this.tiles = new Array(this.width);
         for (var x = 0; x < w; x++) {
             this.tiles[x] = new Array(this.height);
-            for (var y = 0; y < h; y++)
-                this.tiles[x][y] = new Tile(x, y, 0, 0);
+            for (var y = 0; y < h; y++) {
+                var wall = false; //(x == 0 || x == w - 1 || y == 0 || y == h - 1);
+                this.tiles[x][y] = new Tile(x, y, wall ? 1 : 0, wall ? 1 : 0);
+            }
         }
         
         // TODO: generate/load dungeon
@@ -65,9 +67,13 @@ export class Game {
 
         this.players.push(s);
 
-        if (ability == 'shield')        s.unit = new Guard(this.nextUnidID++, 0, 0); // TODO: find proper position
-        else if (ability == 'staff')    s.unit = new Wizard(this.nextUnidID++, 0, 0);
-        else /*if (ability == 'sword)*/ s.unit = new Warrior(this.nextUnidID++, 0, 0);
+        // TODO: find proper position
+        var spawnX = 0;
+        var spawnY = 0;
+
+        if (ability == 'shield')        s.unit = new Guard(this.nextUnidID++, spawnX, spawnY);
+        else if (ability == 'staff')    s.unit = new Wizard(this.nextUnidID++, spawnX, spawnY);
+        else /*if (ability == 'sword)*/ s.unit = new Warrior(this.nextUnidID++, spawnX, spawnY);
 
         // send level load event to player
         this.sendLoadDungeon(s);
@@ -81,10 +87,9 @@ export class Game {
 
     public removePlayer(s: Socket): void {
         if (!s.unit) return;
-
-        // send event to remove unit
-        this.sendRemoveUnit(s.unit.id);
-
+        
+        s.unit.hitBy(this, null);
+        
         for (var i = this.players.length; i--;) {
             if (this.players[i] === s) {
                 this.players[i] = this.players[this.players.length - 1];
@@ -100,7 +105,7 @@ export class Game {
     }
     
     public moveUnit(u: Unit, dir: number): boolean {
-        if (u.canWalkAfter < this.currentTime) return false;
+        if (u.canWalkAfter > this.currentTime) return false;
         var dx = (dir == 1 ? 1 : (dir == 3 ? -1 : 0));
         var dy = (dir == 2 ? 1 : (dir == 0 ? -1 : 0));
         if (dx == 0 && dy == 0) return false;
@@ -119,6 +124,9 @@ export class Game {
 
         // send move unit event to all players
         this.sendMovement(u.id, u.x, u.y, tx, ty, u.walkTime);
+
+        if (this.tiles[u.x][u.y].unit == u) this.tiles[u.x][u.y].unit = null;
+        this.tiles[tx][ty].unit = u;
 
         u.x = tx;
         u.y = ty;
@@ -157,6 +165,7 @@ export class Game {
 
     public sendAddUnit(id: number, x: number, y: number, lookDir: number, texture: number): void {
         this.sendToAll('add', {
+            id: id,
             x: x,
             y: y,
             d: lookDir,
@@ -177,17 +186,13 @@ export class Game {
     }
 
     public sendShieldDown(id: number): void {
-        this.sendToAll('rems', {
-            id: id,
-            tex: tex
-        });
+        this.sendToAll('rems', id);
     }
 
-    public sendShieldUp(id: number, dir: number, tex: number): void {
+    public sendShieldUp(id: number, dir: number): void {
         this.sendToAll('adds', {
             id: id,
-            d: dir,
-            tex: tex
+            d: dir
         });
     }
 

@@ -6,7 +6,7 @@ var Unit = (function () {
         this.canFly = false;
         this.huntPriority = 0;
         this.canWalkAfter = 0;
-        this.walkTime = 400;
+        this.walkTime = 270;
         this.lookingDir = 2;
         this.texture = 0;
         this.dead = false;
@@ -26,8 +26,11 @@ var Unit = (function () {
     Unit.prototype.serialize = function () {
         return {
             id: this.id,
-            tex: this.texture,
-            dir: this.lookingDir
+            t: this.texture,
+            dir: this.lookingDir,
+            x: this.x,
+            y: this.y,
+            inc: this.secondaryTexture
         };
     };
     return Unit;

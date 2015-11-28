@@ -12,6 +12,7 @@ export class Unit {
     texture: number;
     dead: boolean;
     hasAI: boolean;
+    secondaryTexture: boolean;
 
     constructor(id: number, x: number, y: number) {
         this.id = id;
@@ -20,7 +21,7 @@ export class Unit {
         this.canFly = false;
         this.huntPriority = 0;
         this.canWalkAfter = 0;
-        this.walkTime = 400;
+        this.walkTime = 270;
         this.lookingDir = 2;
         this.texture = 0;
         this.dead = false;
@@ -49,8 +50,11 @@ export class Unit {
     public serialize(): Object {
         return {
             id: this.id,
-            tex: this.texture,
-            dir: this.lookingDir
+            t: this.texture,
+            dir: this.lookingDir,
+            x: this.x,
+            y: this.y,
+            inc: this.secondaryTexture
         }
     }
 }

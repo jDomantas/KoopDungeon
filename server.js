@@ -7,7 +7,7 @@ var io = require('socket.io')(http);
 app.use(express.static('static'));
 
 var game = require('./Game.js').Game;
-game = new game(1, 1);
+game = new game(10, 10);
 
 // check for inactivity every 10 seconds
 setInterval(updateInactivePlayers, 10000);
@@ -36,9 +36,9 @@ io.on('connect', function (socket) {
         if (socket.unit) {
             game.currentTime = Date.now();
             if (dir == 'up') game.playerAction(socket.unit, 0);
-            else if (dir == 'right') game.moveUnit(socket.unit, 1);
-            else if (dir == 'down') game.moveUnit(socket.unit, 2);
-            else if (dir == 'left') game.moveUnit(socket.unit, 3);
+            else if (dir == 'right') game.playerAction(socket.unit, 1);
+            else if (dir == 'down') game.playerAction(socket.unit, 2);
+            else if (dir == 'left') game.playerAction(socket.unit, 3);
         }
     });
 

@@ -12,8 +12,10 @@ var Game = (function () {
         this.tiles = new Array(this.width);
         for (var x = 0; x < w; x++) {
             this.tiles[x] = new Array(this.height);
-            for (var y = 0; y < h; y++)
-                this.tiles[x][y] = new Tile_1.Tile(x, y, 0, 0);
+            for (var y = 0; y < h; y++) {
+                var wall = false; //(x == 0 || x == w - 1 || y == 0 || y == h - 1);
+                this.tiles[x][y] = new Tile_1.Tile(x, y, wall ? 1 : 0, wall ? 1 : 0);
+            }
         }
         // TODO: generate/load dungeon
     }
@@ -39,12 +41,15 @@ var Game = (function () {
         if (s.unit)
             return;
         this.players.push(s);
+        // TODO: find proper position
+        var spawnX = 0;
+        var spawnY = 0;
         if (ability == 'shield')
-            s.unit = new Guard_1.Guard(this.nextUnidID++, 0, 0); // TODO: find proper position
+            s.unit = new Guard_1.Guard(this.nextUnidID++, spawnX, spawnY);
         else if (ability == 'staff')
-            s.unit = new Wizard_1.Wizard(this.nextUnidID++, 0, 0);
+            s.unit = new Wizard_1.Wizard(this.nextUnidID++, spawnX, spawnY);
         else
-            s.unit = new Warrior_1.Warrior(this.nextUnidID++, 0, 0);
+            s.unit = new Warrior_1.Warrior(this.nextUnidID++, spawnX, spawnY);
         // send level load event to player
         this.sendLoadDungeon(s);
         s.lastResponse = this.currentPingNumber;
@@ -55,8 +60,7 @@ var Game = (function () {
     Game.prototype.removePlayer = function (s) {
         if (!s.unit)
             return;
-        // send event to remove unit
-        this.sendRemoveUnit(s.unit.id);
+        s.unit.hitBy(this, null);
         for (var i = this.players.length; i--;) {
             if (this.players[i] === s) {
                 this.players[i] = this.players[this.players.length - 1];
@@ -70,7 +74,7 @@ var Game = (function () {
         u.ability(this, dir);
     };
     Game.prototype.moveUnit = function (u, dir) {
-        if (u.canWalkAfter < this.currentTime)
+        if (u.canWalkAfter > this.currentTime)
             return false;
         var dx = (dir == 1 ? 1 : (dir == 3 ? -1 : 0));
         var dy = (dir == 2 ? 1 : (dir == 0 ? -1 : 0));
@@ -88,6 +92,9 @@ var Game = (function () {
         u.preMove(this, dir);
         // send move unit event to all players
         this.sendMovement(u.id, u.x, u.y, tx, ty, u.walkTime);
+        if (this.tiles[u.x][u.y].unit == u)
+            this.tiles[u.x][u.y].unit = null;
+        this.tiles[tx][ty].unit = u;
         u.x = tx;
         u.y = ty;
         u.lookingDir = dir;
@@ -119,6 +126,7 @@ var Game = (function () {
     };
     Game.prototype.sendAddUnit = function (id, x, y, lookDir, texture) {
         this.sendToAll('add', {
+            id: id,
             x: x,
             y: y,
             d: lookDir,
@@ -136,16 +144,12 @@ var Game = (function () {
         this.sendToAll('remp', id);
     };
     Game.prototype.sendShieldDown = function (id) {
-        this.sendToAll('rems', {
-            id: id,
-            tex: tex
-        });
+        this.sendToAll('rems', id);
     };
-    Game.prototype.sendShieldUp = function (id, dir, tex) {
+    Game.prototype.sendShieldUp = function (id, dir) {
         this.sendToAll('adds', {
             id: id,
-            d: dir,
-            tex: tex
+            d: dir
         });
     };
     Game.prototype.sendStab = function (id, dir) {
@@ -181,4 +185,4 @@ var Game = (function () {
     return Game;
 })();
 exports.Game = Game;
-//# sourceMappingURL=game.js.map
+//# sourceMappingURL=Game.js.map

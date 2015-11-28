@@ -34,6 +34,8 @@ var Wizard = (function (_super) {
                 onPortal.y = this.y;
                 game.sendTeleport(onPortal.id, this.x, this.y);
             }
+            game.tiles[this.portalX][this.portalY].unit = this;
+            game.tiles[this.x][this.y].unit = onPortal;
             this.x = this.portalX;
             this.y = this.portalY;
             game.sendTeleport(this.id, this.x, this.y);
@@ -42,8 +44,11 @@ var Wizard = (function (_super) {
     Wizard.prototype.serialize = function () {
         return {
             id: this.id,
-            tex: this.texture,
+            t: this.texture,
             dir: this.lookingDir,
+            x: this.x,
+            y: this.y,
+            inc: this.secondaryTexture,
             openp: this.hasPortal,
             px: this.portalX,
             py: this.portalY

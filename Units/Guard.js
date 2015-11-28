@@ -13,29 +13,30 @@ var Guard = (function (_super) {
         this.invulnerableFrom = -1;
     }
     Guard.prototype.ability = function (game, dir) {
-        if (this.invulnerableFrom != -1)
-            this.texture++;
+        this.secondaryTexture = true;
         // send shield animation to everyone
-        game.sendShieldUp(this.id, dir, this.texture);
+        game.sendShieldUp(this.id, dir);
         this.invulnerableFrom = dir;
     };
     Guard.prototype.preMove = function (game, dir) {
         if (this.invulnerableFrom != -1) {
-            this.texture--;
+            this.secondaryTexture = false;
             this.invulnerableFrom = -1;
             // send event that shield is down
-            game.sendShieldDown(this.id, this.texture);
+            game.sendShieldDown(this.id);
         }
     };
     Guard.prototype.hitBy = function (game, other) {
-        if (other.x < this.x && this.invulnerableFrom == 3)
-            return;
-        if (other.x > this.x && this.invulnerableFrom == 1)
-            return;
-        if (other.y < this.y && this.invulnerableFrom == 0)
-            return;
-        if (other.y > this.y && this.invulnerableFrom == 2)
-            return;
+        if (other) {
+            if (other.x < this.x && this.invulnerableFrom == 3)
+                return;
+            if (other.x > this.x && this.invulnerableFrom == 1)
+                return;
+            if (other.y < this.y && this.invulnerableFrom == 0)
+                return;
+            if (other.y > this.y && this.invulnerableFrom == 2)
+                return;
+        }
         this.dead = true;
         game.sendRemoveUnit(this.id);
         game.tiles[this.x][this.y].unit = null;

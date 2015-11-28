@@ -13,10 +13,10 @@ export class Guard extends Unit {
     }
 
     public ability(game: Game, dir: number) {
-        if (this.invulnerableFrom != -1) this.texture++;
+        this.secondaryTexture = true;
 
         // send shield animation to everyone
-        game.sendShieldUp(this.id, dir, this.texture);
+        game.sendShieldUp(this.id, dir);
 
 
         this.invulnerableFrom = dir;
@@ -24,19 +24,21 @@ export class Guard extends Unit {
 
     public preMove(game: Game, dir: number) {
         if (this.invulnerableFrom != -1) {
-            this.texture--;
+            this.secondaryTexture = false;
 
             this.invulnerableFrom = -1;
             // send event that shield is down
-            game.sendShieldDown(this.id, this.texture);
+            game.sendShieldDown(this.id);
         }
     }
 
     public hitBy(game: Game, other: Unit) {
-        if (other.x < this.x && this.invulnerableFrom == 3) return;
-        if (other.x > this.x && this.invulnerableFrom == 1) return;
-        if (other.y < this.y && this.invulnerableFrom == 0) return;
-        if (other.y > this.y && this.invulnerableFrom == 2) return;
+        if (other) {
+            if (other.x < this.x && this.invulnerableFrom == 3) return;
+            if (other.x > this.x && this.invulnerableFrom == 1) return;
+            if (other.y < this.y && this.invulnerableFrom == 0) return;
+            if (other.y > this.y && this.invulnerableFrom == 2) return;
+        }
 
         this.dead = true;
 
