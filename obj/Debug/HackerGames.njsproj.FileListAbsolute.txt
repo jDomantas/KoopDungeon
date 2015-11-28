@@ -1,0 +1,2 @@
+C:\Users\Domantas\Documents\Visual Studio 2015\Projects\HackerGames\HackerGames\obj\Debug\HackerGames.njsprojResolveAssemblyReference.cache
+C:\Users\Domantas\Documents\Visual Studio 2015\Projects\HackerGames\HackerGames\bin\Microsoft.NodejsTools.WebRole.dll
