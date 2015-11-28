@@ -2,6 +2,7 @@
 import {Warrior} from './Units/Warrior';
 import {Guard} from './Units/Guard';
 import {Wizard} from './Units/Wizard';
+import {Monster} from './Units/Monster';
 import {Tile} from './Tile';
 
 interface Socket {
@@ -12,6 +13,11 @@ interface Socket {
     disconnect(): void;
 }
 
+interface Point {
+    x: number;
+    y: number;
+}
+
 export class Game {
     width: number;
     height: number;
@@ -20,6 +26,9 @@ export class Game {
     tiles: Tile[][];
     currentTime: number;
     nextUnidID: number;
+    bfsParent: number[][];
+    bfsFoundPriority: number[][];
+    bfsDistance: number[][];
 
     constructor(w: number, h: number) {
         this.width = w;
@@ -29,13 +38,23 @@ export class Game {
         this.nextUnidID = 0;
 
         this.tiles = new Array(this.width);
+        this.bfsDistance = new Array(this.width);
+        this.bfsFoundPriority = new Array(this.width);
+        this.bfsParent = new Array(this.width);
+
         for (var x = 0; x < w; x++) {
             this.tiles[x] = new Array(this.height);
+            this.bfsDistance[x] = new Array(this.height);
+            this.bfsFoundPriority[x] = new Array(this.height);
+            this.bfsParent[x] = new Array(this.height);
+
             for (var y = 0; y < h; y++) {
-                var wall = false; //(x == 0 || x == w - 1 || y == 0 || y == h - 1);
-                this.tiles[x][y] = new Tile(x, y, wall ? 1 : 0, wall ? 1 : 0);
+                var wall = (x == 0 || x == w - 1 || y == 0 || y == h - 1);
+                this.tiles[x][y] = new Tile(x, y, wall ? 1 : 0, wall ? 0 : 1);
             }
         }
+
+        this.tiles[8][8].unit = new Monster(this.nextUnidID++, 8, 8);
         
         // TODO: generate/load dungeon
     }
@@ -59,7 +78,80 @@ export class Game {
     }
 
     public updateMonsters(): void {
-        // TODO: update monsters
+        this.runBFS();
+        for (var x = this.width; x--;)
+            for (var y = this.height; y--;)
+                if (this.tiles[x][y].unit && this.tiles[x][y].unit.hasAI && this.tiles[x][y].unit.canWalkAfter <= this.currentTime)
+                    this.tiles[x][y].unit.aiUpdate(this);
+    }
+
+    private runBFS(): void {
+        var queue: Point[] = [];
+        for (var x = this.width; x--;)
+            for (var y = this.height; y--;) {
+                this.bfsFoundPriority[x][y] = 0;
+                this.bfsParent[x][y] = -1;
+                this.bfsDistance[x][y] = 1000000000;
+                if (this.tiles[x][y].unit && this.tiles[x][y].unit.huntPriority > 0) {
+                    queue.push({ x: x, y: y });
+                    this.bfsFoundPriority[x][y] = this.tiles[x][y].unit.huntPriority;
+                    this.bfsDistance[x][y] = 0;
+                }
+            }
+
+        var queuePos: number = 0;
+        
+        var ngList = [
+            [0, -1, 1, 0, 0, 1, -1, 0],
+            [0, -1, 1, 0, -1, 0, 0, 1],
+            [0, -1, 0, 1, 1, 0, -1, 0],
+            [0, -1, 0, 1, -1, 0, 1, 0],
+            [0, -1, -1, 0, 1, 0, 0, 1],
+            [0, -1, -1, 0, 0, 1, 1, 0],
+            [1, 0, 0, -1, 0, 1, -1, 0],
+            [1, 0, 0, -1, -1, 0, 0, 1],
+            [1, 0, 0, 1, 0, -1, -1, 0],
+            [1, 0, 0, 1, -1, 0, 0, -1],
+            [1, 0, -1, 0, 0, -1, 0, 1],
+            [1, 0, -1, 0, 0, 1, 0, -1],
+            [0, 1, 0, -1, 1, 0, -1, 0],
+            [0, 1, 0, -1, -1, 0, 1, 0],
+            [0, 1, 1, 0, 0, -1, -1, 0],
+            [0, 1, 1, 0, -1, 0, 0, -1],
+            [0, 1, -1, 0, 0, -1, 1, 0],
+            [0, 1, -1, 0, 1, 0, 0, -1],
+            [-1, 0, 0, -1, 1, 0, 0, 1],
+            [-1, 0, 0, -1, 0, 1, 1, 0],
+            [-1, 0, 1, 0, 0, -1, 0, 1],
+            [-1, 0, 1, 0, 0, 1, 0, -1],
+            [-1, 0, 0, 1, 0, -1, 1, 0],
+            [-1, 0, 0, 1, 1, 0, 0, -1]
+        ];
+
+        while (queuePos < queue.length) {
+            var pos: Point = queue[queuePos++];
+            
+            var order = Math.floor(Math.random() * 24);
+            for (var i = 0; i < 4; i++) {
+                var x = pos.x + ngList[order][i * 2];
+                var y = pos.y + ngList[order][i * 2 + 1];
+                if (x >= 0 && y >= 0 && x < this.width && y < this.height && this.tiles[x][y].floorHeight == 0 &&
+                    this.bfsDistance[pos.x][pos.y] < 10 &&
+                    this.bfsFoundPriority[x][y] < this.bfsFoundPriority[pos.x][pos.y] && this.bfsDistance[x][y] > this.bfsDistance[pos.x][pos.y]) {
+
+                    if (this.tiles[x][y].unit == null && this.bfsParent[x][y] == -1)
+                        queue.push({ x: x, y: y });
+
+                    this.bfsDistance[x][y] = this.bfsDistance[pos.x][pos.y] + 1;
+                    this.bfsFoundPriority[x][y] = this.bfsFoundPriority[pos.x][pos.y];
+
+                    if (pos.x < x) this.bfsParent[x][y] = 3;
+                    else if (pos.x > x) this.bfsParent[x][y] = 1;
+                    else if (pos.y < y) this.bfsParent[x][y] = 0;
+                    else this.bfsParent[x][y] = 2;
+                }
+            }
+        }
     }
 
     public addPlayer(s: Socket, ability: string): void {
@@ -68,8 +160,8 @@ export class Game {
         this.players.push(s);
 
         // TODO: find proper position
-        var spawnX = 0;
-        var spawnY = 0;
+        var spawnX = 2;
+        var spawnY = 2;
 
         if (ability == 'shield')        s.unit = new Guard(this.nextUnidID++, spawnX, spawnY);
         else if (ability == 'staff')    s.unit = new Wizard(this.nextUnidID++, spawnX, spawnY);
@@ -99,7 +191,7 @@ export class Game {
     }
 
     public playerAction(u: Unit, dir: number): void {
-        if (!u || u.canWalkAfter > this.currentTime) return;
+        if (!u || u.canWalkAfter > this.currentTime || u.dead) return;
 
         u.ability(this, dir);
     }
@@ -112,11 +204,15 @@ export class Game {
 
         var tx = u.x + dx;
         var ty = u.y + dy;
-        if (!this.canPassTile(u, tx, ty)) return false;
+        if (!this.canPassTile(u, tx, ty)) {
+            this.sendDirectionChange(u.id, dir);
+            return false;
+        }
 
         var bump: Unit = this.getUnitAt(tx, ty);
         if (bump != null) {
-            u.bumpedInto(bump);
+            u.bumpedInto(this, bump);
+            this.sendDirectionChange(u.id, dir);
             return false;
         }
 
@@ -198,6 +294,20 @@ export class Game {
 
     public sendStab(id: number, dir: number): void {
         this.sendToAll('stab', {
+            id: id,
+            d: dir
+        });
+    }
+
+    public sendCast(id: number, dir: number): void {
+        this.sendToAll('cast', {
+            id: id,
+            d: dir
+        });
+    }
+
+    public sendDirectionChange(id: number, dir: number): void {
+        this.sendToAll('dir', {
             id: id,
             d: dir
         });

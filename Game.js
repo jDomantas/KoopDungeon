@@ -1,6 +1,7 @@
 var Warrior_1 = require('./Units/Warrior');
 var Guard_1 = require('./Units/Guard');
 var Wizard_1 = require('./Units/Wizard');
+var Monster_1 = require('./Units/Monster');
 var Tile_1 = require('./Tile');
 var Game = (function () {
     function Game(w, h) {
@@ -10,13 +11,20 @@ var Game = (function () {
         this.currentPingNumber = 0;
         this.nextUnidID = 0;
         this.tiles = new Array(this.width);
+        this.bfsDistance = new Array(this.width);
+        this.bfsFoundPriority = new Array(this.width);
+        this.bfsParent = new Array(this.width);
         for (var x = 0; x < w; x++) {
             this.tiles[x] = new Array(this.height);
+            this.bfsDistance[x] = new Array(this.height);
+            this.bfsFoundPriority[x] = new Array(this.height);
+            this.bfsParent[x] = new Array(this.height);
             for (var y = 0; y < h; y++) {
-                var wall = false; //(x == 0 || x == w - 1 || y == 0 || y == h - 1);
-                this.tiles[x][y] = new Tile_1.Tile(x, y, wall ? 1 : 0, wall ? 1 : 0);
+                var wall = (x == 0 || x == w - 1 || y == 0 || y == h - 1);
+                this.tiles[x][y] = new Tile_1.Tile(x, y, wall ? 1 : 0, wall ? 0 : 1);
             }
         }
+        this.tiles[8][8].unit = new Monster_1.Monster(this.nextUnidID++, 8, 8);
         // TODO: generate/load dungeon
     }
     Game.prototype.updatePlayers = function () {
@@ -35,15 +43,84 @@ var Game = (function () {
         }
     };
     Game.prototype.updateMonsters = function () {
-        // TODO: update monsters
+        this.runBFS();
+        for (var x = this.width; x--;)
+            for (var y = this.height; y--;)
+                if (this.tiles[x][y].unit && this.tiles[x][y].unit.hasAI && this.tiles[x][y].unit.canWalkAfter <= this.currentTime)
+                    this.tiles[x][y].unit.aiUpdate(this);
+    };
+    Game.prototype.runBFS = function () {
+        var queue = [];
+        for (var x = this.width; x--;)
+            for (var y = this.height; y--;) {
+                this.bfsFoundPriority[x][y] = 0;
+                this.bfsParent[x][y] = -1;
+                this.bfsDistance[x][y] = 1000000000;
+                if (this.tiles[x][y].unit && this.tiles[x][y].unit.huntPriority > 0) {
+                    queue.push({ x: x, y: y });
+                    this.bfsFoundPriority[x][y] = this.tiles[x][y].unit.huntPriority;
+                    this.bfsDistance[x][y] = 0;
+                }
+            }
+        var queuePos = 0;
+        var ngList = [
+            [0, -1, 1, 0, 0, 1, -1, 0],
+            [0, -1, 1, 0, -1, 0, 0, 1],
+            [0, -1, 0, 1, 1, 0, -1, 0],
+            [0, -1, 0, 1, -1, 0, 1, 0],
+            [0, -1, -1, 0, 1, 0, 0, 1],
+            [0, -1, -1, 0, 0, 1, 1, 0],
+            [1, 0, 0, -1, 0, 1, -1, 0],
+            [1, 0, 0, -1, -1, 0, 0, 1],
+            [1, 0, 0, 1, 0, -1, -1, 0],
+            [1, 0, 0, 1, -1, 0, 0, -1],
+            [1, 0, -1, 0, 0, -1, 0, 1],
+            [1, 0, -1, 0, 0, 1, 0, -1],
+            [0, 1, 0, -1, 1, 0, -1, 0],
+            [0, 1, 0, -1, -1, 0, 1, 0],
+            [0, 1, 1, 0, 0, -1, -1, 0],
+            [0, 1, 1, 0, -1, 0, 0, -1],
+            [0, 1, -1, 0, 0, -1, 1, 0],
+            [0, 1, -1, 0, 1, 0, 0, -1],
+            [-1, 0, 0, -1, 1, 0, 0, 1],
+            [-1, 0, 0, -1, 0, 1, 1, 0],
+            [-1, 0, 1, 0, 0, -1, 0, 1],
+            [-1, 0, 1, 0, 0, 1, 0, -1],
+            [-1, 0, 0, 1, 0, -1, 1, 0],
+            [-1, 0, 0, 1, 1, 0, 0, -1]
+        ];
+        while (queuePos < queue.length) {
+            var pos = queue[queuePos++];
+            var order = Math.floor(Math.random() * 24);
+            for (var i = 0; i < 4; i++) {
+                var x = pos.x + ngList[order][i * 2];
+                var y = pos.y + ngList[order][i * 2 + 1];
+                if (x >= 0 && y >= 0 && x < this.width && y < this.height && this.tiles[x][y].floorHeight == 0 &&
+                    this.bfsDistance[pos.x][pos.y] < 10 &&
+                    this.bfsFoundPriority[x][y] < this.bfsFoundPriority[pos.x][pos.y] && this.bfsDistance[x][y] > this.bfsDistance[pos.x][pos.y]) {
+                    if (this.tiles[x][y].unit == null && this.bfsParent[x][y] == -1)
+                        queue.push({ x: x, y: y });
+                    this.bfsDistance[x][y] = this.bfsDistance[pos.x][pos.y] + 1;
+                    this.bfsFoundPriority[x][y] = this.bfsFoundPriority[pos.x][pos.y];
+                    if (pos.x < x)
+                        this.bfsParent[x][y] = 3;
+                    else if (pos.x > x)
+                        this.bfsParent[x][y] = 1;
+                    else if (pos.y < y)
+                        this.bfsParent[x][y] = 0;
+                    else
+                        this.bfsParent[x][y] = 2;
+                }
+            }
+        }
     };
     Game.prototype.addPlayer = function (s, ability) {
         if (s.unit)
             return;
         this.players.push(s);
         // TODO: find proper position
-        var spawnX = 0;
-        var spawnY = 0;
+        var spawnX = 2;
+        var spawnY = 2;
         if (ability == 'shield')
             s.unit = new Guard_1.Guard(this.nextUnidID++, spawnX, spawnY);
         else if (ability == 'staff')
@@ -69,7 +146,7 @@ var Game = (function () {
         }
     };
     Game.prototype.playerAction = function (u, dir) {
-        if (!u || u.canWalkAfter > this.currentTime)
+        if (!u || u.canWalkAfter > this.currentTime || u.dead)
             return;
         u.ability(this, dir);
     };
@@ -82,11 +159,14 @@ var Game = (function () {
             return false;
         var tx = u.x + dx;
         var ty = u.y + dy;
-        if (!this.canPassTile(u, tx, ty))
+        if (!this.canPassTile(u, tx, ty)) {
+            this.sendDirectionChange(u.id, dir);
             return false;
+        }
         var bump = this.getUnitAt(tx, ty);
         if (bump != null) {
-            u.bumpedInto(bump);
+            u.bumpedInto(this, bump);
+            this.sendDirectionChange(u.id, dir);
             return false;
         }
         u.preMove(this, dir);
@@ -154,6 +234,18 @@ var Game = (function () {
     };
     Game.prototype.sendStab = function (id, dir) {
         this.sendToAll('stab', {
+            id: id,
+            d: dir
+        });
+    };
+    Game.prototype.sendCast = function (id, dir) {
+        this.sendToAll('cast', {
+            id: id,
+            d: dir
+        });
+    };
+    Game.prototype.sendDirectionChange = function (id, dir) {
+        this.sendToAll('dir', {
             id: id,
             d: dir
         });

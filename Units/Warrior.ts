@@ -13,7 +13,7 @@ export class Warrior extends Unit {
         // send stab animation to everyone
         this.lookingDir = dir;
         game.sendStab(this.id, this.lookingDir);
-        this.canWalkAfter = game.currentTime + 300; // stab takes 300 ms
+        this.canWalkAfter = game.currentTime + 400; // stab takes 400 ms
         
         // stab
         var tx = this.x, ty = this.y;

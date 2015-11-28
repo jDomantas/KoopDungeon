@@ -17,6 +17,7 @@ var Guard = (function (_super) {
         // send shield animation to everyone
         game.sendShieldUp(this.id, dir);
         this.invulnerableFrom = dir;
+        this.lookingDir = dir;
     };
     Guard.prototype.preMove = function (game, dir) {
         if (this.invulnerableFrom != -1) {

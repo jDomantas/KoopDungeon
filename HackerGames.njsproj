@@ -87,6 +87,7 @@
     <TypeScriptCompile Include="Game.ts" />
     <TypeScriptCompile Include="Tile.ts" />
     <TypeScriptCompile Include="Units\Guard.ts" />
+    <TypeScriptCompile Include="Units\Monster.ts" />
     <TypeScriptCompile Include="Units\Unit.ts" />
     <TypeScriptCompile Include="Units\Warrior.ts" />
     <TypeScriptCompile Include="Units\Wizard.ts" />

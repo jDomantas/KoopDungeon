@@ -14,12 +14,12 @@ export class Guard extends Unit {
 
     public ability(game: Game, dir: number) {
         this.secondaryTexture = true;
-
+        
         // send shield animation to everyone
         game.sendShieldUp(this.id, dir);
-
-
+        
         this.invulnerableFrom = dir;
+        this.lookingDir = dir;
     }
 
     public preMove(game: Game, dir: number) {

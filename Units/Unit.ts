@@ -28,7 +28,7 @@ export class Unit {
         this.hasAI = false;
     }
 
-    public bumpedInto(other: Unit): void {
+    public bumpedInto(game: Game, other: Unit): void {
 
     }
 
@@ -47,11 +47,15 @@ export class Unit {
         game.tiles[this.x][this.y].unit = null;
     }
 
+    public aiUpdate(game: Game): void {
+
+    }
+
     public serialize(): Object {
         return {
             id: this.id,
             t: this.texture,
-            dir: this.lookingDir,
+            d: this.lookingDir,
             x: this.x,
             y: this.y,
             inc: this.secondaryTexture

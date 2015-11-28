@@ -12,7 +12,7 @@ var Unit = (function () {
         this.dead = false;
         this.hasAI = false;
     }
-    Unit.prototype.bumpedInto = function (other) {
+    Unit.prototype.bumpedInto = function (game, other) {
     };
     Unit.prototype.ability = function (game, dir) {
     };
@@ -23,11 +23,13 @@ var Unit = (function () {
         game.sendRemoveUnit(this.id);
         game.tiles[this.x][this.y].unit = null;
     };
+    Unit.prototype.aiUpdate = function (game) {
+    };
     Unit.prototype.serialize = function () {
         return {
             id: this.id,
             t: this.texture,
-            dir: this.lookingDir,
+            d: this.lookingDir,
             x: this.x,
             y: this.y,
             inc: this.secondaryTexture

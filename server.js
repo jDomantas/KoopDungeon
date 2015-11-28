@@ -11,6 +11,7 @@ game = new game(10, 10);
 
 // check for inactivity every 10 seconds
 setInterval(updateInactivePlayers, 10000);
+setInterval(updateAI, 150);
 
 var listeningPort = 8000;//process.env.PORT || 80;
 http.listen(listeningPort, function () { console.log('listening on *:' + listeningPort); });
@@ -62,4 +63,9 @@ io.on('connect', function (socket) {
 function updateInactivePlayers() {
     game.currentTime = Date.now();
     game.updatePlayers();
+}
+
+function updateAI() {
+    game.currentTime = Date.now();
+    game.updateMonsters();
 }
