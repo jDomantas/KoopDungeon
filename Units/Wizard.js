@@ -16,7 +16,6 @@ var Wizard = (function (_super) {
         this.hasPortal = false;
     }
     Wizard.prototype.ability = function (game, dir) {
-        this.canWalkAfter = game.currentTime + 400;
         var tx = this.x;
         var ty = this.y;
         if (dir == 0)
@@ -28,7 +27,7 @@ var Wizard = (function (_super) {
         else
             tx--;
         if (!this.hasPortal) {
-            if (game.canPassTile(this, tx, ty)) {
+            if (game.canPassTile(this, tx, ty) && !game.tiles[tx][ty].preventsPortals) {
                 this.canWalkAfter = game.currentTime + 400;
                 game.sendCast(this.id, dir);
                 this.hasPortal = true;
@@ -38,11 +37,12 @@ var Wizard = (function (_super) {
             }
         }
         else if ((this.portalX == tx && this.portalY == ty) || (this.x == this.portalX && this.y == this.portalY)) {
+            this.canWalkAfter = game.currentTime + 400;
             game.sendCast(this.id, dir);
             game.sendRemovePortal(this.id);
             this.hasPortal = false;
         }
-        else {
+        else if (game.canPassTile(this, this.portalX, this.portalY)) {
             var target = game.getUnitAt(tx, ty);
             if (target == null) {
                 game.sendCast(this.id, 2);
@@ -50,9 +50,14 @@ var Wizard = (function (_super) {
                 target = this;
             }
             else {
+                if (target.huntPriority > 0 && target.x >= game.spawnX1 && target.x <= game.spawnX2 && target.y >= game.spawnY1 && target.y <= game.spawnY2)
+                    return;
+                if (game.tiles[tx][ty].preventsPortals)
+                    return;
                 game.sendCast(this.id, dir);
                 this.lookingDir = dir;
             }
+            this.canWalkAfter = game.currentTime + 400;
             var onPortal = game.getUnitAt(this.portalX, this.portalY);
             if (onPortal != null) {
                 onPortal.canWalkAfter = 0;
@@ -62,10 +67,18 @@ var Wizard = (function (_super) {
             }
             game.tiles[this.portalX][this.portalY].unit = target;
             game.tiles[target.x][target.y].unit = onPortal;
+            tx = target.x;
+            ty = target.y;
             target.x = this.portalX;
             target.y = this.portalY;
             game.sendTeleport(target.id, target.x, target.y);
+            game.tiles[tx][ty].unitChanged(game);
+            game.tiles[this.portalX][this.portalY].unitChanged(game);
         }
+    };
+    Wizard.prototype.bumpedInto = function (game, unit) {
+        if (unit.coinID)
+            this.getCoin(game, unit.coinID);
     };
     Wizard.prototype.serialize = function () {
         return {
@@ -75,6 +88,7 @@ var Wizard = (function (_super) {
             x: this.x,
             y: this.y,
             inc: this.secondaryTexture,
+            c: this.coinsCollected,
             openp: this.hasPortal,
             px: this.portalX,
             py: this.portalY

@@ -88,14 +88,42 @@
         
         this.createButtons();
         for (var i = 0; i < 3; i++) {
-            if (app.mouse.x >= this.buttons[i].x &&
-                app.mouse.y >= this.buttons[i].y &&
-                app.mouse.x < this.buttons[i].x + this.buttons[i].w &&
-                app.mouse.y < this.buttons[i].y + this.buttons[i].h) {
+            if (e.x >= this.buttons[i].x &&
+                e.y >= this.buttons[i].y &&
+                e.x < this.buttons[i].x + this.buttons[i].w &&
+                e.y < this.buttons[i].y + this.buttons[i].h) {
                 
                 ENGINE.Game.weaponOfChoice = this.buttons[i].icon;
                 app.setState(ENGINE.Game);
             }
+        }
+    },
+
+    touchstart: function (e) {
+    
+        this.createButtons();
+            for (var i = 0; i < 3; i++) {
+                if (e.x >= this.buttons[i].x &&
+                    e.y >= this.buttons[i].y &&
+                    e.x < this.buttons[i].x + this.buttons[i].w &&
+                    e.y < this.buttons[i].y + this.buttons[i].h) {
+                
+                    ENGINE.Game.weaponOfChoice = this.buttons[i].icon;
+                    app.setState(ENGINE.Game);
+                }
+            }
+    },
+
+    keydown: function (e) {
+        if (e.key == '1') {
+            ENGINE.Game.weaponOfChoice = this.buttons[0].icon;
+            app.setState(ENGINE.Game);
+        } else if (e.key == '2') {
+            ENGINE.Game.weaponOfChoice = this.buttons[1].icon;
+            app.setState(ENGINE.Game);
+        } else if (e.key == '3') {
+            ENGINE.Game.weaponOfChoice = this.buttons[2].icon;
+            app.setState(ENGINE.Game);
         }
     }
 

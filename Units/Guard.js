@@ -38,9 +38,11 @@ var Guard = (function (_super) {
             if (other.y > this.y && this.invulnerableFrom == 2)
                 return;
         }
-        this.dead = true;
-        game.sendRemoveUnit(this.id);
-        game.tiles[this.x][this.y].unit = null;
+        _super.prototype.hitBy.call(this, game, other);
+    };
+    Guard.prototype.bumpedInto = function (game, unit) {
+        if (unit.coinID)
+            this.getCoin(game, unit.coinID);
     };
     return Guard;
 })(Unit_1.Unit);

@@ -28,6 +28,8 @@ var Monster = (function (_super) {
         return true;
     };
     Monster.prototype.bumpedInto = function (game, other) {
+        if (other.huntPriority == 0)
+            return;
         this.canWalkAfter = game.currentTime + 430;
         other.hitBy(game, this);
         if (other.x < this.x)

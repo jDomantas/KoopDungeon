@@ -13,6 +13,9 @@ export class Unit {
     dead: boolean;
     hasAI: boolean;
     secondaryTexture: boolean;
+    coinsCollected: number;
+    coinMask: number;
+    coinID: number;
 
     constructor(id: number, x: number, y: number) {
         this.id = id;
@@ -26,6 +29,10 @@ export class Unit {
         this.texture = 0;
         this.dead = false;
         this.hasAI = false;
+
+        this.coinMask = 0;
+        this.coinsCollected = 0;
+        this.coinID = 0;
     }
 
     public bumpedInto(game: Game, other: Unit): void {
@@ -41,10 +48,14 @@ export class Unit {
     }
 
     public hitBy(game: Game, other: Unit) {
+        if (other && this.huntPriority > 0 && this.x >= game.spawnX1 && this.x <= game.spawnX2 && this.y >= game.spawnY1 && this.y <= game.spawnY2)
+            return;
+
         this.dead = true;
 
         game.sendRemoveUnit(this.id);
         game.tiles[this.x][this.y].unit = null;
+        game.tiles[this.x][this.y].unitChanged(game);
     }
 
     public aiUpdate(game: Game): void {
@@ -58,7 +69,17 @@ export class Unit {
             d: this.lookingDir,
             x: this.x,
             y: this.y,
-            inc: this.secondaryTexture
+            inc: this.secondaryTexture,
+            c: this.coinsCollected
         }
+    }
+
+    public getCoin(game: Game, id: number): void {
+        if (this.coinMask & (1 << id)) return;
+
+        this.coinMask |= (1 << id);
+        this.coinsCollected++;
+
+        game.sendCoin(this.id);
     }
 }

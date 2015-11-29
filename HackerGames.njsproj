@@ -69,6 +69,7 @@
     <Compile Include="static\script\Select.js" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Tiles\" />
     <Folder Include="static\atlases\" />
     <Folder Include="static\data\" />
     <Folder Include="static\images\" />
@@ -85,7 +86,13 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Game.ts" />
-    <TypeScriptCompile Include="Tile.ts" />
+    <TypeScriptCompile Include="Tiles\Button.ts" />
+    <TypeScriptCompile Include="Tiles\Door.ts" />
+    <TypeScriptCompile Include="Tiles\FireTrap.ts" />
+    <TypeScriptCompile Include="Tiles\Tile.ts" />
+    <TypeScriptCompile Include="Units\Chest.ts" />
+    <TypeScriptCompile Include="Units\Crate.ts" />
+    <TypeScriptCompile Include="Units\Fireball.ts" />
     <TypeScriptCompile Include="Units\Guard.ts" />
     <TypeScriptCompile Include="Units\Monster.ts" />
     <TypeScriptCompile Include="Units\Unit.ts" />

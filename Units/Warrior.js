@@ -30,6 +30,10 @@ var Warrior = (function (_super) {
         if (target != null)
             target.hitBy(game, this);
     };
+    Warrior.prototype.bumpedInto = function (game, unit) {
+        if (unit.coinID)
+            this.getCoin(game, unit.coinID);
+    };
     return Warrior;
 })(Unit_1.Unit);
 exports.Warrior = Warrior;

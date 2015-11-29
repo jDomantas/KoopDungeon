@@ -30,6 +30,8 @@ export class Monster extends Unit {
     }
 
     public bumpedInto(game: Game, other: Unit): void {
+        if (other.huntPriority == 0)
+            return;
         this.canWalkAfter = game.currentTime + 430;
         other.hitBy(game, this);
         if (other.x < this.x) game.sendStab(this.id, 3);

@@ -7,7 +7,7 @@ var io = require('socket.io')(http);
 app.use(express.static('static'));
 
 var game = require('./Game.js').Game;
-game = new game(10, 10);
+game = new game(41, 60);
 
 // check for inactivity every 10 seconds
 setInterval(updateInactivePlayers, 10000);

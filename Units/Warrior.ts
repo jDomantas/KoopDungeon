@@ -26,4 +26,9 @@ export class Warrior extends Unit {
         if (target != null)
             target.hitBy(game, this);
     }
+
+    public bumpedInto(game: Game, unit: Unit): void {
+        if (unit.coinID)
+            this.getCoin(game, unit.coinID);
+    }
 }

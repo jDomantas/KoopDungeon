@@ -40,9 +40,11 @@ export class Guard extends Unit {
             if (other.y > this.y && this.invulnerableFrom == 2) return;
         }
 
-        this.dead = true;
+        super.hitBy(game, other);
+    }
 
-        game.sendRemoveUnit(this.id);
-        game.tiles[this.x][this.y].unit = null;
+    public bumpedInto(game: Game, unit: Unit): void {
+        if (unit.coinID)
+            this.getCoin(game, unit.coinID);
     }
 }
